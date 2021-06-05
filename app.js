@@ -60,7 +60,7 @@ async function getBattleSnakeHandler (req, reply) {
   reply.send({
     apiversion: '1',
     author: 'kklee998',
-    color: '#888888',
+    color: '#f3a2c0',
     head: 'default',
     tail: 'default',
     version: process.env.npm_package_version
