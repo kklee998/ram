@@ -3,14 +3,8 @@ const HOST = process.env.HOST || '0.0.0.0'
 const server = require('./app')({
   logger: {
     level: 'info',
-    prettyPrint: process.env.NODE_ENV !== 'production'
-  }
-})
-
-server.ready().then(() => {
-  server.log.info('successfully booted!')
-}, (err) => {
-  server.log.info('an error happened', err)
+    prettyPrint: process.env.NODE_ENV !== 'production',
+  },
 })
 
 server.listen(PORT, HOST, (err, address) => {
