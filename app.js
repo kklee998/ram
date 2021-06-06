@@ -1,5 +1,5 @@
 const fastify = require('fastify')
-const engine = require('./engine')
+const {engine} = require('./engine')
 
 const getBattleSnakeSchema = {
   schema: {
@@ -61,8 +61,8 @@ async function getBattleSnakeHandler (req, reply) {
     apiversion: '1',
     author: 'kklee998',
     color: '#f3a2c0',
-    head: 'default',
-    tail: 'default',
+    head: 'caffeine',
+    tail: 'coffee',
     version: process.env.npm_package_version
   })
 }
@@ -80,10 +80,10 @@ async function endGameHandler (req, reply) {
 async function moveHandler (req, reply) {
   const { body } = req
   req.log.info(body)
-  const move = await engine(body)
+  const {move, shout} = await engine(body)
   reply.send({
     move,
-    shout: move
+    shout
   })
 }
 
