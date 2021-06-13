@@ -2,7 +2,7 @@ const isEqual = require("lodash.isequal");
 
 const MOVES = ["up", "down", "left", "right"];
 
-async function noBehind(me) {
+function noBehind(me) {
   const { body, length } = me;
   const [head, behind] = body;
   if (isEqual(head, behind) || length < 2) return MOVES;
@@ -19,7 +19,7 @@ function noLookBehind(from) {
   if (from === "right") return ["down", "left", "up"];
 }
 
-async function generateDanger(board) {
+function generateDanger(board) {
   // return an array of all snake and hazards coordinates
   const { snakes, hazards } = board;
   const snakeBody = snakes.flatMap((snake) =>
@@ -48,10 +48,10 @@ async function engine(gs) {
     food,
   } = board;
 
-  const LOWHP = (maxHeight * maxWidth) / 2
+  const LOWHP = (maxHeight * maxWidth) / 2;
 
-  const dangers = await generateDanger(board);
-  const noBehindMoves = await noBehind(you);
+  const dangers = generateDanger(board);
+  const noBehindMoves = noBehind(you);
 
   const legalMoves = noBehindMoves.map(generateNextSquares(x, y));
   const nonDangerMoves = legalMoves.filter((ns) => {
@@ -74,8 +74,7 @@ async function engine(gs) {
   console.log("possibleMoves ==>", nonDangerMoves);
   if (nonDangerMoves.length === 0) return { move: "down", shout: "SEPPKKU" };
   if (nonDangerMoves.length === 1) {
-    const [onlyMove] = nonDangerMoves;
-    const { move } = onlyMove;
+    const [{ move }] = nonDangerMoves;
     return { move, shout: move };
   }
   // look ahead
@@ -107,8 +106,7 @@ async function engine(gs) {
   });
   console.log("look ahead moves ---->", lookAheadMoves);
   if (lookAheadMoves.length === 1) {
-    const [onlyMove] = lookAheadMoves;
-    const { move } = onlyMove;
+    const [{ move }] = lookAheadMoves;
     return { move, shout: move };
   }
   const finalMoves =
@@ -119,34 +117,34 @@ async function engine(gs) {
     finalMoves.sort((first, second) => {
       let fWeight = 0;
       let sWeight = 0;
-      const { move: firstMove, x: x1, y: y1 } = first;
-      const { move: secondMove, x: x2, y: y2 } = second;
+      const { move: m1, x: x1, y: y1 } = first;
+      const { move: m2, x: x2, y: y2 } = second;
 
-      if (firstMove === "left") {
+      if (m1 === "left") {
         fWeight = x1 - 0;
       }
-      if (secondMove === "left") {
+      if (m2 === "left") {
         sWeight = x2 - 0;
       }
 
-      if (firstMove === "right") {
+      if (m1 === "right") {
         fWeight = Math.abs(x1 - maxWidth);
       }
-      if (secondMove === "right") {
+      if (m2 === "right") {
         sWeight = Math.abs(x2 - maxWidth);
       }
 
-      if (firstMove === "up") {
+      if (m1 === "up") {
         fWeight = Math.abs(y1 - maxHeight);
       }
-      if (secondMove === "up") {
+      if (m2 === "up") {
         sWeight = Math.abs(y2 - maxHeight);
       }
 
-      if (firstMove === "down") {
+      if (m1 === "down") {
         fWeight = y1 - 0;
       }
-      if (secondMove === "down") {
+      if (m2 === "down") {
         sWeight = y2 - 0;
       }
 
@@ -157,8 +155,8 @@ async function engine(gs) {
     finalMoves.sort((first, second) => {
       let fWeight = 0;
       let sWeight = 0;
+
       const { x: x1, y: y1 } = first;
-      const { x: x2, y: y2 } = second;
       [fWeight] = food
         .map((f) => {
           const a = f.x - x1;
@@ -167,6 +165,7 @@ async function engine(gs) {
         })
         .sort((a, b) => a - b);
 
+      const { x: x2, y: y2 } = second;
       [sWeight] = food
         .map((f) => {
           const a = f.x - x2;
@@ -180,7 +179,7 @@ async function engine(gs) {
   }
 
   console.log("final sorted moves", finalMoves);
-  const { move } = finalMoves[0];
+  const [{ move }] = finalMoves;
   return { move, shout: move };
 }
 

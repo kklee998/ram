@@ -1,4 +1,4 @@
-const { engine, hazardCheck } = require("../engine");
+const { engine } = require("../engine");
 const { test } = require("tap");
 const possibleMoves = ["up", "down", "left", "right"];
 
@@ -80,7 +80,6 @@ test("test engine returns moves", async (t) => {
 });
 
 test("hazard check returns the correct move to avoid the corner", async (t) => {
-  const legalMoves = ["up", "down", "left"];
   const gs = {
     game: {
       id: "16e231f9-ad74-4214-8f26-47f7986c1fd2",
@@ -189,6 +188,6 @@ test("hazard check returns the correct move to avoid the corner", async (t) => {
       shout: "left",
     },
   };
-  const possibleMoves = legalMoves.filter(hazardCheck(gs));
-  t.same(possibleMoves, ["up"]);
+  const { move, shout } = await engine(gs);
+  t.equal(move, "up");
 });
