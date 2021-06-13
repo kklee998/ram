@@ -12,48 +12,36 @@ async function noBehind(me) {
   return MOVES.filter((move) => move !== "up");
 }
 
-function generateDanger(board) {
+function noLookBehind(from) {
+  if (from === "up") return ["down", "left", "right"];
+  if (from === "down") return ["up", "left", "right"];
+  if (from === "left") return ["down", "up", "right"];
+  if (from === "right") return ["down", "left", "up"];
+}
+
+async function generateDanger(board) {
   // return an array of all snake and hazards coordinates
   const { snakes, hazards } = board;
-  const snakeBody = snakes
-    .map((snake) => snake.body.map((b) => ({ x: b.x, y: b.y })))
-    .flat();
+  const snakeBody = snakes.flatMap((snake) =>
+    snake.body.map((b) => ({ x: b.x, y: b.y }))
+  );
   return [...snakeBody, ...hazards];
 }
 
-function hazardCheck({ board, you }) {
-  const { height: maxHeight = height - 1, width: maxWidth = width - 1 } = board;
-  const dangers = generateDanger(board);
+function generateNextSquares(x, y) {
   return function (move) {
     if (move === "left") {
-      const nextSquare = { x: you.head.x - 1, y: you.head.y };
-      // wall check
-      if (nextSquare.x < 0) return false;
-      // snake and hazard check
-      if (dangers.some((danger) => isEqual(danger, nextSquare))) return false;
+      return { move, x: x - 1, y: y };
     }
     if (move === "right") {
-      const nextSquare = { x: you.head.x + 1, y: you.head.y };
-      // wall check
-      if (nextSquare.x >= maxWidth) return false;
-      // snake and hazard check
-      if (dangers.some((danger) => isEqual(danger, nextSquare))) return false;
+      return { move, x: x + 1, y: y };
     }
     if (move === "down") {
-      const nextSquare = { x: you.head.x, y: you.head.y - 1 };
-      // wall check
-      if (nextSquare.y < 0) return false;
-      // snake and hazard check
-      if (dangers.some((danger) => isEqual(danger, nextSquare))) return false;
+      return { move, x: x, y: y - 1 };
     }
     if (move === "up") {
-      const nextSquare = { x: you.head.x, y: you.head.y + 1 };
-      // wall check
-      if (nextSquare.y >= maxHeight) return false;
-      // snake and hazard check
-      if (dangers.some((danger) => isEqual(danger, nextSquare))) return false;
+      return { move, x: x, y: y + 1 };
     }
-    return true;
   };
 }
 
@@ -61,13 +49,63 @@ async function moveSelector(moves) {
   return moves[Math.floor(Math.random() * moves.length)];
 }
 async function engine(gs) {
-  const { you } = gs;
+  const { you, board } = gs;
+  const { head } = you;
+  const { x, y } = head;
+
+  const { height: maxHeight = height - 1, width: maxWidth = width - 1 } = board;
+
+  const dangers = await generateDanger(board);
   const legalMoves = await noBehind(you);
-  const possibleMoves = legalMoves.filter(hazardCheck(gs));
-  console.log("possibleMoves ==>", possibleMoves);
-  if (possibleMoves.length === 0) return { move: "down", shout: "SEPPKKU" };
-  const move = await moveSelector(possibleMoves);
+
+  const moveset = legalMoves.map(generateNextSquares(x, y));
+  const fmovesets = moveset.filter((ns) => {
+    const { move, x, y } = ns;
+    if (dangers.some((danger) => isEqual(danger, { x, y }))) return false;
+    if (move === "left") {
+      if (x < 0) return false;
+    }
+    if (move === "right") {
+      if (x >= maxWidth) return false;
+    }
+    if (move === "down") {
+      if (y < 0) return false;
+    }
+    if (move === "up") {
+      if (y >= maxHeight) return false;
+    }
+    return true;
+  });
+  console.log("possibleMoves ==>", fmovesets);
+  if (fmovesets.length === 0) return { move: "down", shout: "SEPPKKU" };
+  // look ahead
+  const ffmovesets = fmovesets.filter((sq) => {
+    const { move, x, y } = sq;
+    const m = noLookBehind(move);
+    const ms = m.map(generateNextSquares(x, y));
+    const fms = ms.filter((ns) => {
+      const { move, x, y } = ns;
+      if (dangers.some((danger) => isEqual(danger, { x, y }))) return false;
+      if (move === "left") {
+        if (x < 0) return false;
+      }
+      if (move === "right") {
+        if (x >= maxWidth) return false;
+      }
+      if (move === "down") {
+        if (y < 0) return false;
+      }
+      if (move === "up") {
+        if (y >= maxHeight) return false;
+      }
+      return true;
+    });
+    if (fms.length < 1) return true;
+    return false;
+  });
+  console.log("look ahead moves ---->", ffmovesets);
+  const { move } = await moveSelector(ffmovesets);
   return { move, shout: move };
 }
 
-module.exports = { engine, hazardCheck, moveSelector };
+module.exports = { engine, moveSelector };
