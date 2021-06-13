@@ -39,10 +39,14 @@ function generateNextSquares(x, y) {
 
 async function engine(gs) {
   const { you, board } = gs;
-  const { head } = you;
+  const { head, health } = you;
   const { x, y } = head;
 
-  const { height: maxHeight = height - 1, width: maxWidth = width - 1 } = board;
+  const {
+    height: maxHeight = height - 1,
+    width: maxWidth = width - 1,
+    food,
+  } = board;
 
   const dangers = await generateDanger(board);
   const noBehindMoves = await noBehind(you);
@@ -109,42 +113,70 @@ async function engine(gs) {
     lookAheadMoves.length > 2 ? lookAheadMoves : nonDangerMoves;
   console.log("final unsorted moves:::::::", finalMoves);
   // sort by distance to wall
-  finalMoves.sort((first, second) => {
-    let fWeight = 0;
-    let sWeight = 0;
-    const { move: firstMove, x: fx, y: fy } = first;
-    const { move: secondMove, x: sx, y: sy } = second;
+  if (health > 30) {
+    finalMoves.sort((first, second) => {
+      let fWeight = 0;
+      let sWeight = 0;
+      const { move: firstMove, x: x1, y: y1 } = first;
+      const { move: secondMove, x: x2, y: y2 } = second;
 
-    if (firstMove === "left") {
-      fWeight = (fx - 0) * 5;
-    }
-    if (secondMove === "left") {
-      sWeight = (sx - 0) * 4;
-    }
+      if (firstMove === "left") {
+        fWeight = x1 - 0;
+      }
+      if (secondMove === "left") {
+        sWeight = x2 - 0;
+      }
 
-    if (firstMove === "right") {
-      fWeight = Math.abs(fx - maxWidth);
-    }
-    if (secondMove === "right") {
-      sWeight = Math.abs(sx - maxWidth);
-    }
+      if (firstMove === "right") {
+        fWeight = Math.abs(x1 - maxWidth);
+      }
+      if (secondMove === "right") {
+        sWeight = Math.abs(x2 - maxWidth);
+      }
 
-    if (firstMove === "up") {
-      fWeight = Math.abs(fy - maxHeight);
-    }
-    if (secondMove === "up") {
-      sWeight = Math.abs(sy - maxHeight);
-    }
+      if (firstMove === "up") {
+        fWeight = Math.abs(y1 - maxHeight);
+      }
+      if (secondMove === "up") {
+        sWeight = Math.abs(y2 - maxHeight);
+      }
 
-    if (firstMove === "down") {
-      fWeight = (fy - 0) * 3;
-    }
-    if (secondMove === "down") {
-      sWeight = (sy - 0) * 2;
-    }
+      if (firstMove === "down") {
+        fWeight = y1 - 0;
+      }
+      if (secondMove === "down") {
+        sWeight = y2 - 0;
+      }
 
-    return sWeight - fWeight;
-  });
+      return sWeight - fWeight;
+    });
+  } else {
+    // find nearest food
+    finalMoves.sort((first, second) => {
+      let fWeight = 0;
+      let sWeight = 0;
+      const { x: x1, y: y1 } = first;
+      const { x: x2, y: y2 } = second;
+      [fWeight] = food
+        .map((f) => {
+          const a = f.x - x1;
+          const b = f.y - y1;
+          return Math.sqrt(a * a + b * b);
+        })
+        .sort((a, b) => a - b);
+
+      [sWeight] = food
+        .map((f) => {
+          const a = f.x - x2;
+          const b = f.y - y2;
+          return Math.sqrt(a * a + b * b);
+        })
+        .sort((a, b) => a - b);
+
+      return fWeight - sWeight;
+    });
+  }
+
   console.log("final sorted moves", finalMoves);
   const { move } = finalMoves[0];
   return { move, shout: move };
