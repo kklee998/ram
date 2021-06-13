@@ -107,47 +107,46 @@ async function engine(gs) {
   }
   const finalMoves =
     lookAheadMoves.length > 2 ? lookAheadMoves : nonDangerMoves;
-  console.log('final unsorted moves:::::::', finalMoves)
+  console.log("final unsorted moves:::::::", finalMoves);
   // sort by distance to wall
   finalMoves.sort((first, second) => {
-    
-    let fDistance = 0;
-    let sDistance = 0;
+    let fWeight = 0;
+    let sWeight = 0;
     const { move: firstMove, x: fx, y: fy } = first;
     const { move: secondMove, x: sx, y: sy } = second;
 
     if (firstMove === "left") {
-      fDistance = fx - 0;
+      fWeight = (fx - 0) * 5;
     }
     if (secondMove === "left") {
-      sDistance = sx - 0;
+      sWeight = (sx - 0) * 4;
     }
 
     if (firstMove === "right") {
-      fDistance = Math.abs(fx - maxWidth);
+      fWeight = Math.abs(fx - maxWidth);
     }
     if (secondMove === "right") {
-      sDistance = Math.abs(sx - maxWidth);
+      sWeight = Math.abs(sx - maxWidth);
     }
 
     if (firstMove === "up") {
-      fDistance = Math.abs(fy - maxHeight);
+      fWeight = Math.abs(fy - maxHeight);
     }
     if (secondMove === "up") {
-      sDistance = Math.abs(sy - maxHeight);
+      sWeight = Math.abs(sy - maxHeight);
     }
 
     if (firstMove === "down") {
-      fDistance = fy - 0;
+      fWeight = (fy - 0) * 3;
     }
     if (secondMove === "down") {
-      sDistance = sy - 0;
+      sWeight = (sy - 0) * 2;
     }
 
-    return sDistance - fDistance
+    return sWeight - fWeight;
   });
-  console.log('final sorted moves', finalMoves)
-  const { move } = finalMoves[0]
+  console.log("final sorted moves", finalMoves);
+  const { move } = finalMoves[0];
   return { move, shout: move };
 }
 
