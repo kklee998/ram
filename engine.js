@@ -56,10 +56,10 @@ async function engine(gs) {
   const { height: maxHeight = height - 1, width: maxWidth = width - 1 } = board;
 
   const dangers = await generateDanger(board);
-  const legalMoves = await noBehind(you);
+  const noBehindMoves = await noBehind(you);
 
-  const moveset = legalMoves.map(generateNextSquares(x, y));
-  const fmovesets = moveset.filter((ns) => {
+  const legalMoves = noBehindMoves.map(generateNextSquares(x, y));
+  const nonDangerMoves = legalMoves.filter((ns) => {
     const { move, x, y } = ns;
     if (dangers.some((danger) => isEqual(danger, { x, y }))) return false;
     if (move === "left") {
@@ -76,10 +76,15 @@ async function engine(gs) {
     }
     return true;
   });
-  console.log("possibleMoves ==>", fmovesets);
-  if (fmovesets.length === 0) return { move: "down", shout: "SEPPKKU" };
+  console.log("possibleMoves ==>", nonDangerMoves);
+  if (nonDangerMoves.length === 0) return { move: "down", shout: "SEPPKKU" };
+  if (nonDangerMoves.length === 1) {
+    const [onlyMove] = nonDangerMoves
+    const {move} = onlyMove
+    return { move, shout: move }; 
+  }
   // look ahead
-  const ffmovesets = fmovesets.filter((sq) => {
+  const lookAheadMoves = nonDangerMoves.filter((sq) => {
     const { move, x, y } = sq;
     const m = noLookBehind(move);
     const ms = m.map(generateNextSquares(x, y));
@@ -100,11 +105,11 @@ async function engine(gs) {
       }
       return true;
     });
-    if (fms.length < 1) return true;
-    return false;
+    if (fms.length < 1) return false;
+    return true;
   });
-  console.log("look ahead moves ---->", ffmovesets);
-  const { move } = await moveSelector(ffmovesets);
+  console.log("look ahead moves ---->", lookAheadMoves);
+  const { move } = await moveSelector(lookAheadMoves);
   return { move, shout: move };
 }
 
