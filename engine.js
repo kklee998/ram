@@ -112,41 +112,44 @@ async function engine(gs) {
   const finalMoves =
     lookAheadMoves.length > 2 ? lookAheadMoves : nonDangerMoves;
   console.log("final unsorted moves:::::::", finalMoves);
-  // sort by distance to wall
+  // sort by distance to hazards and wall
   if (health > LOWHP) {
     finalMoves.sort((first, second) => {
       let fWeight = 0;
       let sWeight = 0;
+
       const { move: m1, x: x1, y: y1 } = first;
+      // include hazards in same horizontal or vertical line
+      const h1 = dangers.filter((d) => d.x === x1 || d.y === y1);
+      // add wall coordinates
+      if (m1 === "left") h1.push({ x: -1, y: y1 });
+      if (m1 === "right") h1.push({ x: maxWidth, y: y1 });
+      if (m1 === "up") h1.push({ x: x1, y: maxHeight });
+      if (m1 === "down") h1.push({ x: x1, y: -1 });
+
+      [fWeight] = h1
+        .map((f) => {
+          const a = f.x - x1;
+          const b = f.y - y1;
+          return Math.sqrt(a * a + b * b);
+        })
+        .sort((a, b) => a - b);
+
       const { move: m2, x: x2, y: y2 } = second;
+      const h2 = dangers.filter((d) => d.x === x2 || d.y === y2);
 
-      if (m1 === "left") {
-        fWeight = x1 - 0;
-      }
-      if (m2 === "left") {
-        sWeight = x2 - 0;
-      }
+      if (m2 === "left") h2.push({ x: -1, y: y2 });
+      if (m2 === "right") h2.push({ x: maxWidth, y: y2 });
+      if (m2 === "up") h2.push({ x: x2, y: maxHeight });
+      if (m2 === "down") h2.push({ x: x2, y: -1 });
 
-      if (m1 === "right") {
-        fWeight = Math.abs(x1 - maxWidth);
-      }
-      if (m2 === "right") {
-        sWeight = Math.abs(x2 - maxWidth);
-      }
-
-      if (m1 === "up") {
-        fWeight = Math.abs(y1 - maxHeight);
-      }
-      if (m2 === "up") {
-        sWeight = Math.abs(y2 - maxHeight);
-      }
-
-      if (m1 === "down") {
-        fWeight = y1 - 0;
-      }
-      if (m2 === "down") {
-        sWeight = y2 - 0;
-      }
+      [fWeight] = h2
+        .map((f) => {
+          const a = f.x - x2;
+          const b = f.y - y2;
+          return Math.sqrt(a * a + b * b);
+        })
+        .sort((a, b) => a - b);
 
       return sWeight - fWeight;
     });
