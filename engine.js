@@ -48,6 +48,8 @@ async function engine(gs) {
     food,
   } = board;
 
+  const LOWHP = (maxHeight * maxWidth) / 2
+
   const dangers = await generateDanger(board);
   const noBehindMoves = await noBehind(you);
 
@@ -113,7 +115,7 @@ async function engine(gs) {
     lookAheadMoves.length > 2 ? lookAheadMoves : nonDangerMoves;
   console.log("final unsorted moves:::::::", finalMoves);
   // sort by distance to wall
-  if (health > 30) {
+  if (health > LOWHP) {
     finalMoves.sort((first, second) => {
       let fWeight = 0;
       let sWeight = 0;
